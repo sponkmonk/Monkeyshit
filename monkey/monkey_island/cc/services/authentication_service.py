@@ -8,6 +8,7 @@ from common.utils.exceptions import (
     UnknownUserError,
 )
 from monkey_island.cc.models import UserCredentials
+from monkey_island.cc.models.user import User
 from monkey_island.cc.repository import IUserRepository
 from monkey_island.cc.server_utils.encryption import (
     ILockableEncryptor,
@@ -29,20 +30,21 @@ class AuthenticationService:
         self._repository_encryptor = repository_encryptor
 
     def needs_registration(self) -> bool:
-        return not self._user_repository.has_registered_users()
+        return not User.objects.first()
 
     def register_new_user(self, username: str, password: str):
         if not username or not password:
             raise InvalidRegistrationCredentialsError("Username or password can not be empty.")
 
         credentials = UserCredentials(username, _hash_password(password))
-        self._user_repository.add_user(credentials)
+        # self._user_repository.add_user(credentials)
+        User(username=username, password_hash=_hash_password(password)).save()
         self._reset_repository_encryptor(username, password)
         reset_database()
 
     def authenticate(self, username: str, password: str):
         try:
-            registered_user = self._user_repository.get_user_credentials(username)
+            registered_user = User.objects.first()
         except UnknownUserError:
             raise IncorrectCredentialsError()
 
@@ -50,6 +52,7 @@ class AuthenticationService:
             raise IncorrectCredentialsError()
 
         self._unlock_repository_encryptor(username, password)
+        return registered_user
 
     def _unlock_repository_encryptor(self, username: str, password: str):
         secret = _get_secret_from_credentials(username, password)

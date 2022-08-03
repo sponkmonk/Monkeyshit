@@ -26,7 +26,6 @@ class Root(AbstractResource):
         else:
             return make_response(400, {"error": "unknown action"})
 
-    @jwt_required
     def get_server_info(self):
         return jsonify(
             ip_addresses=local_ip_addresses(),

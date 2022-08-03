@@ -9,7 +9,9 @@ class LoginPageComponent extends React.Component {
   login = (event) => {
     event.preventDefault()
     this.auth.login(this.username, this.password).then(res => {
-      if (res['result']) {
+      console.log("HERE")
+      console.log(res)
+      if (res) {
         this.redirectToHome();
       } else {
         this.setState({failed: true});
@@ -42,17 +44,16 @@ class LoginPageComponent extends React.Component {
       failed: false
     };
 
-    this.auth.needsRegistration()
-      .then(result => {
-        if (result) {
-          this.redirectToRegistration()
-        }
-      })
+    //this.auth.needsRegistration()
+    //  .then(result => {
+    //    if (result) {
+    //      this.redirectToRegistration()
+    //    }
+    //  })
 
-    if (this.auth.loggedIn()) {
-      this.redirectToHome();
-    }
-
+    this.auth.loggedIn().then((res) => {
+      if(res){this.redirectToHome();}
+    })
   }
 
   render() {

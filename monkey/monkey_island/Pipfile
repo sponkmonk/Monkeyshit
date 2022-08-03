@@ -32,6 +32,8 @@ marshmallow-enum = "*"
 readerwriterlock = "*"
 pymongo = "*"
 cryptography = "*"
+flask-login = "*"
+flask-wtf = "*"
 
 [dev-packages]
 virtualenv = ">=20.0.26"

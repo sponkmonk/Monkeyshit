@@ -11,7 +11,7 @@ import LicensePage from './pages/LicensePage';
 import AuthComponent from './AuthComponent';
 import LoginPageComponent from './pages/LoginPage';
 import RegisterPageComponent from './pages/RegisterPage';
-import LandingPage from "./pages/LandingPage";
+import LandingPage from './pages/LandingPage';
 import Notifier from 'react-desktop-notification';
 import NotFoundPage from './pages/NotFoundPage';
 import GettingStartedPage from './pages/GettingStartedPage';
@@ -21,13 +21,13 @@ import 'normalize.css/normalize.css';
 import 'styles/App.css';
 import 'react-table/react-table.css';
 import LoadingScreen from './ui-components/LoadingScreen';
-import SidebarLayoutComponent from "./layouts/SidebarLayoutComponent";
-import {CompletedSteps} from "./side-menu/CompletedSteps";
+import SidebarLayoutComponent from './layouts/SidebarLayoutComponent';
+import {CompletedSteps} from './side-menu/CompletedSteps';
 import Timeout = NodeJS.Timeout;
-import IslandHttpClient from "./IslandHttpClient";
-import _ from "lodash";
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faFileCode, faLightbulb} from "@fortawesome/free-solid-svg-icons";
+import IslandHttpClient from './IslandHttpClient';
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import {faFileCode, faLightbulb} from '@fortawesome/free-solid-svg-icons';
+import LogoutPageComponent from './pages/LogoutPage';
 
 
 let notificationIcon = require('../images/notification-logo-512x512.png');
@@ -41,6 +41,7 @@ export const Routes = {
   SecurityReport: '/report/security',
   RansomwareReport: '/report/ransomware',
   LoginPage: '/login',
+  Logout: '/logout',
   RegisterPage: '/register',
   ConfigurePage: '/configure',
   RunMonkeyPage: '/run-monkey',
@@ -49,7 +50,7 @@ export const Routes = {
   LicensePage: '/license'
 }
 
-export function isReportRoute(route){
+export function isReportRoute(route) {
   return route.startsWith(Routes.Report);
 }
 
@@ -73,43 +74,23 @@ class AppComponent extends AuthComponent {
       return
     }
 
-    let res = this.auth.loggedIn();
+    this.auth.loggedIn().then((res) => {
+      console.log("called")
+      if (this.state.isLoggedIn !== res) {
+        this.setState({
+          isLoggedIn: res
+        });
+      }
 
-    if (this.state.isLoggedIn !== res) {
-      this.setState({
-        isLoggedIn: res
-      });
-    }
-
-    if (!res) {
-      this.auth.needsRegistration()
-        .then(result => {
-          this.setState({
-            needsRegistration: result
-          });
-        })
-    }
-
-    if (res) {
-      this.setMode()
-        .then(() => {
-            if (this.state.islandMode === "unset") {
-              return
-            }
-            this.authFetch('/api')
-              .then(res => res.json())
-              .then(res => {
-                let completedSteps = CompletedSteps.buildFromResponse(res.completed_steps);
-                // This check is used to prevent unnecessary re-rendering
-                if (_.isEqual(this.state.completedSteps, completedSteps)) {
-                  return;
-                }
-                this.setState({completedSteps: completedSteps});
-                this.showInfectionDoneNotification();
-              });
-          }
-        )
-    }
+      if (!res) {
+        this.auth.needsRegistration()
+          .then(result => {
+            this.setState({
+              needsRegistration: result
+            });
+          })
+      }
+    });
   };
 
   setMode = () => {
@@ -121,6 +102,7 @@ class AppComponent extends AuthComponent {
 
   renderRoute = (route_path, page_component, is_exact_path = false) => {
     let render_func = () => {
+      console.log(this.state.isLoggedIn);
       switch (this.state.isLoggedIn) {
         case true:
           if (this.needsRedirectionToLandingPage(route_path)) {
@@ -151,12 +133,12 @@ class AppComponent extends AuthComponent {
   };
 
   needsRedirectionToLandingPage = (route_path) => {
-    return (this.state.islandMode === "unset" && route_path !== Routes.LandingPage)
+    return (this.state.islandMode === 'unset' && route_path !== Routes.LandingPage)
   }
 
   needsRedirectionToGettingStarted = (route_path) => {
     return route_path === Routes.LandingPage &&
-      this.state.islandMode !== "unset" && this.state.islandMode !== undefined
+      this.state.islandMode !== 'unset' && this.state.islandMode !== undefined
   }
 
   redirectTo = (userPath, targetPath) => {
@@ -176,43 +158,49 @@ class AppComponent extends AuthComponent {
   }
 
   getDefaultReport() {
-    if(this.state.islandMode === 'ransomware'){
+    if (this.state.islandMode === 'ransomware') {
       return Routes.RansomwareReport;
     } else {
       return Routes.SecurityReport;
     }
   }
 
-  getIslandModeTitle(){
-    if(this.state.islandMode === 'ransomware'){
-      return this.formIslandModeTitle("Ransomware", faFileCode);
+  getIslandModeTitle() {
+    if (this.state.islandMode === 'ransomware') {
+      return this.formIslandModeTitle('Ransomware', faFileCode);
     } else {
-      return this.formIslandModeTitle("Custom", faLightbulb);
+      return this.formIslandModeTitle('Custom', faLightbulb);
     }
   }
 
-  formIslandModeTitle(title, icon){
+  formIslandModeTitle(title, icon) {
     return (<>
       <h5 className={'text-muted'}>
-        <FontAwesomeIcon icon={icon} /> {title}
+        <FontAwesomeIcon icon={icon}/> {title}
       </h5>
     </>)
   }
 
   render() {
 
-    let defaultSideNavProps = {completedSteps: this.state.completedSteps,
-                               onStatusChange: this.updateStatus,
-                               islandMode: this.state.islandMode,
-                               defaultReport: this.getDefaultReport(),
-                               sideNavHeader: this.getIslandModeTitle()}
+    let defaultSideNavProps = {
+      completedSteps: this.state.completedSteps,
+      onStatusChange: this.updateStatus,
+      islandMode: this.state.islandMode,
+      defaultReport: this.getDefaultReport(),
+      sideNavHeader: this.getIslandModeTitle()
+    }
 
     return (
       <Router>
         <Container fluid>
           <Switch>
-            <Route path={Routes.LoginPage} render={() => (<LoginPageComponent onStatusChange={this.updateStatus}/>)}/>
-            <Route path={Routes.RegisterPage} render={() => (<RegisterPageComponent onStatusChange={this.updateStatus}/>)}/>
+            <Route path={Routes.LoginPage}
+                   render={() => (<LoginPageComponent onStatusChange={this.updateStatus}/>)}/>
+            <Route path={Routes.RegisterPage}
+                   render={() => (<RegisterPageComponent onStatusChange={this.updateStatus}/>)}/>
+            <Route path={Routes.Logout}
+                   render={() => (<LogoutPageComponent />)}/>
             {this.renderRoute(Routes.LandingPage,
               <SidebarLayoutComponent component={LandingPage}
                                       sideNavShow={false}

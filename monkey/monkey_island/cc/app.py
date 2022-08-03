@@ -5,7 +5,9 @@ from datetime import timedelta
 from typing import Iterable, Type
 
 import flask_restful
-from flask import Flask, Response, send_from_directory
+from flask import Flask, Response, jsonify, send_from_directory
+from flask_login import LoginManager, UserMixin, login_required, logout_user
+from mongoengine import Document, StringField
 from werkzeug.exceptions import NotFound
 
 from common import DIContainer
@@ -84,27 +86,43 @@ def serve_home():
 def init_app_config(app, mongo_url):
     app.config["MONGO_URI"] = mongo_url
 
-    # See https://flask-jwt-extended.readthedocs.io/en/stable/options
-    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = AUTH_EXPIRATION_TIME
-    # Invalidate the signature of JWTs if the server process restarts. This avoids the edge case
-    # of getting a JWT,
-    # deciding to reset credentials and then still logging in with the old JWT.
-    app.config["JWT_SECRET_KEY"] = str(uuid.uuid4())
+    app.secret_key = str(uuid.uuid4())
 
     # By default, Flask sorts keys of JSON objects alphabetically.
     # See https://flask.palletsprojects.com/en/1.1.x/config/#JSON_SORT_KEYS.
     app.config["JSON_SORT_KEYS"] = False
+    app.config.update(
+        SESSION_COOKIE_HTTPONLY=True,
+        REMEMBER_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE="Strict",
+    )
 
     app.url_map.strict_slashes = False
     app.json_encoder = CustomJSONEncoder
 
 
+# TODO move
+class User(Document, UserMixin):
+    username = StringField()
+    password_hash = StringField()
+
+    @staticmethod
+    def get_by_id(id: str):
+        return User.objects.get(id=id)
+
+
 def init_app_services(app):
-    init_jwt(app)
+    login_manager = LoginManager()
+    login_manager.init_app(app)
+    login_manager.session_protection = "strong"
     mongo.init_app(app)
 
     with app.app_context():
         database.init()
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.get_by_id(user_id)
 
 
 def init_app_url_rules(app):
@@ -221,5 +239,11 @@ def init_app(mongo_url: str, container: DIContainer):
 
     flask_resource_manager = FlaskDIWrapper(api, container)
     init_api_resources(flask_resource_manager)
+
+    @app.route("/api/logout")
+    @login_required
+    def logout():
+        logout_user()
+        return jsonify({"logout": True})
 
     return app

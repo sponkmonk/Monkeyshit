@@ -2,9 +2,11 @@ import logging
 from http import HTTPStatus
 
 import flask_jwt_extended
-from flask import make_response, request
+from flask import jsonify, make_response, request
+from flask_login import current_user, login_required, login_user
 
 from common.utils.exceptions import IncorrectCredentialsError
+from monkey_island.cc.models.user import User
 from monkey_island.cc.resources.AbstractResource import AbstractResource
 from monkey_island.cc.resources.auth.credential_utils import get_username_password_from_request
 from monkey_island.cc.resources.request_authentication import create_access_token
@@ -22,8 +24,6 @@ def init_jwt(app):
 
 class Authenticate(AbstractResource):
     """
-    Resource for user authentication. The user provides the username and password and we \
-    give them a JWT. \
     See `AuthService.js` file for the frontend counterpart for this code. \
 
     """
@@ -32,6 +32,9 @@ class Authenticate(AbstractResource):
 
     def __init__(self, authentication_service: AuthenticationService):
         self._authentication_service = authentication_service
+
+    def get(self):
+        return jsonify({"authenticated": current_user.is_authenticated})
 
     def post(self):
         """
@@ -45,10 +48,10 @@ class Authenticate(AbstractResource):
         username, password = get_username_password_from_request(request)
 
         try:
-            self._authentication_service.authenticate(username, password)
-            access_token = create_access_token(username)
+            user = self._authentication_service.authenticate(username, password)
         except IncorrectCredentialsError:
             return make_response({"error": "Invalid credentials"}, HTTPStatus.UNAUTHORIZED)
 
         # API Spec: Why are we sending "error" here?
-        return make_response({"access_token": access_token, "error": ""}, HTTPStatus.OK)
+        login_user(user)
+        return jsonify({"login": True})

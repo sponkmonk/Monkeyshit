@@ -2,10 +2,10 @@ import json
 import logging
 
 from flask import make_response, request
+from flask_login import login_required
 
 from monkey_island.cc.models import IslandMode as IslandModeEnum
 from monkey_island.cc.resources.AbstractResource import AbstractResource
-from monkey_island.cc.resources.request_authentication import jwt_required
 from monkey_island.cc.services import IslandModeService
 
 logger = logging.getLogger(__name__)
@@ -18,7 +18,6 @@ class IslandMode(AbstractResource):
         self._island_mode_service = island_mode_service
 
     # API Spec: Instead of POST, this should be PUT
-    @jwt_required
     def post(self):
         try:
             body = json.loads(request.data)
@@ -35,7 +34,7 @@ class IslandMode(AbstractResource):
         except ValueError:
             return make_response({}, 422)
 
-    @jwt_required
+    @login_required
     def get(self):
         island_mode = self._island_mode_service.get_mode()
         return make_response({"mode": island_mode.value}, 200)

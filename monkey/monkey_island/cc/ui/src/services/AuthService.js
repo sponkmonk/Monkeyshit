@@ -28,13 +28,7 @@ export default class AuthService {
       })
     }).then(response => response.json())
       .then(res => {
-        if (Object.prototype.hasOwnProperty.call(res, 'access_token')) {
-          this._setToken(res['access_token']);
-          return {result: true};
-        } else {
-          this._removeToken();
-          return {result: false};
-        }
+        return res["login"]
       })
   };
 
@@ -61,31 +55,8 @@ export default class AuthService {
   };
 
   _authFetch = (url, options = {}) => {
-    const headers = {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json'
-    };
-
-    if (this.loggedIn()) {
-      headers['Authorization'] = 'Bearer ' + this._getToken();
-    }
-
-    if (Object.prototype.hasOwnProperty.call(options, 'headers')) {
-      for (let header in headers) {
-        options['headers'][header] = headers[header];
-      }
-    } else {
-      options['headers'] = headers;
-    }
-
     return fetch(url, options)
       .then(res => {
-        if (res.status === 401) {
-          res.clone().json().then(res_json => {
-            console.log('Got 401 from server while trying to authFetch: ' + JSON.stringify(res_json));
-          });
-          this._removeToken();
-        }
         return res;
       })
   };
@@ -100,8 +71,12 @@ export default class AuthService {
   };
 
   loggedIn() {
-    const token = this._getToken();
-    return ((token !== null) && !this._isTokenExpired(token));
+     return fetch(this.AUTHENTICATION_API_ENDPOINT)
+      .then(response => response.json())
+      .then(res => {
+        console.log(res);
+        return res['authenticated'];
+      })
   }
 
   logout = () => {

@@ -7,7 +7,16 @@ from typing import Iterable, Type
 import flask_restful
 from flask import Flask, Response, jsonify, send_from_directory
 from flask_login import LoginManager, UserMixin, login_required, logout_user
-from mongoengine import Document, StringField
+from flask_mongoengine import MongoEngine
+from flask_security import MongoEngineUserDatastore, RoleMixin, Security
+from mongoengine import (
+    BooleanField,
+    DateTimeField,
+    Document,
+    ListField,
+    ReferenceField,
+    StringField,
+)
 from werkzeug.exceptions import NotFound
 
 from common import DIContainer
@@ -86,6 +95,7 @@ def serve_home():
 def init_app_config(app, mongo_url):
     app.config["MONGO_URI"] = mongo_url
 
+    # Used for signing session tokens
     app.secret_key = str(uuid.uuid4())
 
     # By default, Flask sorts keys of JSON objects alphabetically.
@@ -100,29 +110,46 @@ def init_app_config(app, mongo_url):
     app.url_map.strict_slashes = False
     app.json_encoder = CustomJSONEncoder
 
-
-# TODO move
-class User(Document, UserMixin):
-    username = StringField()
-    password_hash = StringField()
-
-    @staticmethod
-    def get_by_id(id: str):
-        return User.objects.get(id=id)
+    # flask security configuration
+    # generated using: secrets.token_urlsafe()
+    app.config["SECRET_KEY"] = "pf9Wkove4IKEAXvy-cQkeDPhv9Cb3Ag-wyJILbq_dFw"
+    # argon2 uses double hashing by default - so provide key.
+    # For python3: secrets.SystemRandom().getrandbits(128)
+    app.config["SECURITY_PASSWORD_SALT"] = "146585145368132386173505678016728509634"
 
 
 def init_app_services(app):
-    login_manager = LoginManager()
-    login_manager.init_app(app)
-    login_manager.session_protection = "strong"
     mongo.init_app(app)
+
+    db = MongoEngine()
+    app.config["MONGODB_SETTINGS"] = [
+        {
+            "db": "monkeyisland",
+            "host": "localhost",
+            "port": 27017,
+            "alias": "flask-security",
+        }
+    ]
+
+    class Role(Document, RoleMixin):
+        name = StringField(max_length=80, unique=True)
+        description = StringField(max_length=255)
+        permissions = StringField(max_length=255)
+
+    class User(Document, UserMixin):
+        email = StringField(max_length=255, unique=True)
+        password = StringField(max_length=255)
+        active = BooleanField(default=True)
+        fs_uniquifier = StringField(max_length=64, unique=True)
+        confirmed_at = DateTimeField()
+        roles = ListField(ReferenceField(Role), default=[])
 
     with app.app_context():
         database.init()
 
-    @login_manager.user_loader
-    def load_user(user_id):
-        return User.get_by_id(user_id)
+    # Setup Flask-Security
+    user_datastore = MongoEngineUserDatastore(db, User, Role)
+    security = Security(app, user_datastore)
 
 
 def init_app_url_rules(app):

@@ -10,7 +10,7 @@ class VictimHost(object):
         self.os: Dict[str, Any] = {}
         self.services: Dict[str, Any] = {}
         self.icmp = False
-        self.default_server = None
+        self.default_server = ""
 
     def as_dict(self):
         return self.__dict__

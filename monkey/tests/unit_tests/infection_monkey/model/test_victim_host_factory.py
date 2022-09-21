@@ -13,7 +13,7 @@ def mock_get_interface_to_target(monkeypatch):
 
 def test_factory_no_tunnel():
     factory = VictimHostFactory(island_ip="192.168.56.1", island_port="5000", on_island=False)
-    network_address = NetworkAddress("192.168.56.2", None)
+    network_address = NetworkAddress("192.168.56.2", "")
 
     victim = factory.build_victim_host(network_address)
 
@@ -49,4 +49,4 @@ def test_factory_no_default_server():
 
     victim = factory.build_victim_host(network_address)
 
-    assert victim.default_server is None
+    assert not victim.default_server

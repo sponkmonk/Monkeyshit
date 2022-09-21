@@ -18,7 +18,7 @@ SCAN_DATA_MOCK = [
                 },
             },
             "monkey_exe": None,
-            "default_server": None,
+            "default_server": "",
         },
     }
 ]

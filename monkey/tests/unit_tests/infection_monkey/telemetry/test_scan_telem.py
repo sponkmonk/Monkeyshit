@@ -1,4 +1,5 @@
 import json
+from typing import Any, Dict
 
 import pytest
 
@@ -14,9 +15,9 @@ HOST_AS_DICT = {
     "os": {},
     "services": {},
     "icmp": False,
-    "default_server": None,
+    "default_server": "",
 }
-HOST_SERVICES = {}
+HOST_SERVICES: Dict[str, Any] = {}
 
 
 @pytest.fixture

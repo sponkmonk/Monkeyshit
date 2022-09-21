@@ -1,6 +1,6 @@
 import logging
 import threading
-from typing import Dict, Iterable, List, Sequence
+from typing import Dict, Iterable, List, Mapping, Sequence
 
 from common.common_consts.timeouts import CONNECTION_TIMEOUT
 from common.credentials import Credentials
@@ -8,6 +8,7 @@ from infection_monkey import network_scanning
 from infection_monkey.i_puppet import (
     ExploiterResultData,
     FingerprintData,
+    IFingerprinter,
     IPuppet,
     PingScanData,
     PluginType,
@@ -18,7 +19,7 @@ from infection_monkey.model import VictimHost
 
 from .plugin_registry import PluginRegistry
 
-EMPTY_FINGERPRINT = PingScanData(False, None)
+EMPTY_FINGERPRINT = FingerprintData(None, "", {})
 
 logger = logging.getLogger()
 
@@ -45,7 +46,7 @@ class Puppet(IPuppet):
 
     def scan_tcp_ports(
         self, host: str, ports: List[int], timeout: float = CONNECTION_TIMEOUT
-    ) -> Dict[int, PortScanData]:
+    ) -> Mapping[int, PortScanData]:
         return network_scanning.scan_tcp_ports(host, ports, timeout)
 
     def fingerprint(
@@ -57,7 +58,9 @@ class Puppet(IPuppet):
         options: Dict,
     ) -> FingerprintData:
         try:
-            fingerprinter = self._plugin_registry.get_plugin(name, PluginType.FINGERPRINTER)
+            fingerprinter: IFingerprinter = self._plugin_registry.get_plugin(
+                name, PluginType.FINGERPRINTER
+            )
             return fingerprinter.get_host_fingerprint(host, ping_scan_data, port_scan_data, options)
         except Exception:
             logger.exception(

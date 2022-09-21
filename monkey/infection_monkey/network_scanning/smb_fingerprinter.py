@@ -144,16 +144,16 @@ class SMBFingerprinter(IFingerprinter):
         port_scan_data: Dict[int, PortScanData],
         _options: Dict,
     ) -> FingerprintData:
-        services = {}
+        services: Dict = {}
         smb_service = {
             "display_name": DISPLAY_NAME,
             "port": SMB_PORT,
         }
         os_type = None
-        os_version = None
+        os_version = ""
 
         if (SMB_PORT not in port_scan_data) or (port_scan_data[SMB_PORT].status != PortStatus.OPEN):
-            return FingerprintData(None, None, services)
+            return FingerprintData(None, "", services)
 
         logger.debug(f"Fingerprinting potential SMB port {SMB_PORT} on {host}")
 

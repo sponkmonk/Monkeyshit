@@ -63,7 +63,7 @@ def test_fingerprint_only_port_443(mock_get_http_headers, http_fingerprinter):
     mock_get_http_headers.assert_called_with("https://127.0.0.1:443")
 
     assert fingerprint_data.os_type is None
-    assert fingerprint_data.os_version is None
+    assert not fingerprint_data.os_version
     assert len(fingerprint_data.services.keys()) == 1
 
     assert fingerprint_data.services["tcp-443"]["data"][0] == PYTHON_SERVER_HEADER["Server"]
@@ -86,7 +86,7 @@ def test_open_port_no_http_server(mock_get_http_headers, http_fingerprinter):
     mock_get_http_headers.assert_any_call("http://127.0.0.1:9200")
 
     assert fingerprint_data.os_type is None
-    assert fingerprint_data.os_version is None
+    assert not fingerprint_data.os_version
     assert len(fingerprint_data.services.keys()) == 0
 
 
@@ -106,7 +106,7 @@ def test_multiple_open_ports(mock_get_http_headers, http_fingerprinter):
     mock_get_http_headers.assert_any_call("http://127.0.0.1:8080")
 
     assert fingerprint_data.os_type is None
-    assert fingerprint_data.os_version is None
+    assert not fingerprint_data.os_version
     assert len(fingerprint_data.services.keys()) == 2
 
     assert fingerprint_data.services["tcp-443"]["data"][0] == PYTHON_SERVER_HEADER["Server"]
@@ -126,7 +126,7 @@ def test_server_missing_from_http_headers(mock_get_http_headers, http_fingerprin
     assert mock_get_http_headers.call_count == 2
 
     assert fingerprint_data.os_type is None
-    assert fingerprint_data.os_version is None
+    assert not fingerprint_data.os_version
     assert len(fingerprint_data.services.keys()) == 1
 
     assert fingerprint_data.services["tcp-1080"]["data"][0] == ""

@@ -24,7 +24,7 @@ def test_single_subnet():
     assert len(scan_targets) == 255
 
     for i in range(0, 255):
-        assert NetworkAddress(f"10.0.0.{i}", None) in scan_targets
+        assert NetworkAddress(f"10.0.0.{i}", "") in scan_targets
 
 
 @pytest.mark.parametrize("single_ip", ["10.0.0.2", "10.0.0.2/32", "10.0.0.2-10.0.0.2"])
@@ -33,8 +33,8 @@ def test_single_ip(single_ip):
     scan_targets = compile_ranges_only([single_ip])
 
     assert len(scan_targets) == 1
-    assert NetworkAddress("10.0.0.2", None) in scan_targets
-    assert NetworkAddress("10.0.0.2", None) == scan_targets[0]
+    assert NetworkAddress("10.0.0.2", "") in scan_targets
+    assert NetworkAddress("10.0.0.2", "") == scan_targets[0]
 
 
 def test_multiple_subnet():
@@ -43,10 +43,10 @@ def test_multiple_subnet():
     assert len(scan_targets) == 262
 
     for i in range(0, 255):
-        assert NetworkAddress(f"10.0.0.{i}", None) in scan_targets
+        assert NetworkAddress(f"10.0.0.{i}", "") in scan_targets
 
     for i in range(8, 15):
-        assert NetworkAddress(f"192.168.56.{i}", None) in scan_targets
+        assert NetworkAddress(f"192.168.56.{i}", "") in scan_targets
 
 
 def test_middle_of_range_subnet():
@@ -55,7 +55,7 @@ def test_middle_of_range_subnet():
     assert len(scan_targets) == 7
 
     for i in range(0, 7):
-        assert NetworkAddress(f"192.168.56.{i}", None) in scan_targets
+        assert NetworkAddress(f"192.168.56.{i}", "") in scan_targets
 
 
 @pytest.mark.parametrize(
@@ -68,7 +68,7 @@ def test_ip_range(ip_range):
     assert len(scan_targets) == 9
 
     for i in range(25, 34):
-        assert NetworkAddress(f"192.168.56.{i}", None) in scan_targets
+        assert NetworkAddress(f"192.168.56.{i}", "") in scan_targets
 
 
 def test_no_duplicates():
@@ -77,7 +77,7 @@ def test_no_duplicates():
     assert len(scan_targets) == 7
 
     for i in range(0, 7):
-        assert NetworkAddress(f"192.168.56.{i}", None) in scan_targets
+        assert NetworkAddress(f"192.168.56.{i}", "") in scan_targets
 
 
 def test_blocklisted_ips():
@@ -146,7 +146,7 @@ def test_no_redundant_targets():
     )
 
     assert len(scan_targets) == 2
-    assert NetworkAddress(ip="127.0.0.0", domain=None) in scan_targets
+    assert NetworkAddress(ip="127.0.0.0", domain="") in scan_targets
     assert NetworkAddress(ip="127.0.0.1", domain="localhost") in scan_targets
 
 
@@ -212,7 +212,7 @@ def test_local_subnet_added():
     assert len(scan_targets) == 254
 
     for ip in chain(range(0, 5), range(6, 255)):
-        assert NetworkAddress(f"10.0.0.{ip}", None) in scan_targets
+        assert NetworkAddress(f"10.0.0.{ip}", "") in scan_targets
 
 
 def test_multiple_local_subnets_added():
@@ -232,10 +232,10 @@ def test_multiple_local_subnets_added():
     assert len(scan_targets) == 2 * (255 - 1)
 
     for ip in chain(range(0, 5), range(6, 255)):
-        assert NetworkAddress(f"10.0.0.{ip}", None) in scan_targets
+        assert NetworkAddress(f"10.0.0.{ip}", "") in scan_targets
 
     for ip in chain(range(0, 99), range(100, 255)):
-        assert NetworkAddress(f"172.33.66.{ip}", None) in scan_targets
+        assert NetworkAddress(f"172.33.66.{ip}", "") in scan_targets
 
 
 def test_blocklisted_ips_missing_from_local_subnets():
@@ -273,12 +273,12 @@ def test_local_subnets_and_ranges_added():
     assert len(scan_targets) == 254 + 3
 
     for ip in range(0, 5):
-        assert NetworkAddress(f"10.0.0.{ip}", None) in scan_targets
+        assert NetworkAddress(f"10.0.0.{ip}", "") in scan_targets
     for ip in range(6, 255):
-        assert NetworkAddress(f"10.0.0.{ip}", None) in scan_targets
+        assert NetworkAddress(f"10.0.0.{ip}", "") in scan_targets
 
     for ip in range(40, 43):
-        assert NetworkAddress(f"172.33.66.{ip}", None) in scan_targets
+        assert NetworkAddress(f"172.33.66.{ip}", "") in scan_targets
 
 
 def test_local_network_interfaces_specified_but_disabled():
@@ -295,7 +295,7 @@ def test_local_network_interfaces_specified_but_disabled():
     assert len(scan_targets) == 3
 
     for ip in range(40, 43):
-        assert NetworkAddress(f"172.33.66.{ip}", None) in scan_targets
+        assert NetworkAddress(f"172.33.66.{ip}", "") in scan_targets
 
 
 def test_local_network_interfaces_subnet_masks():
@@ -315,7 +315,7 @@ def test_local_network_interfaces_subnet_masks():
     assert len(scan_targets) == 4
 
     for ip in [108, 110, 145, 146]:
-        assert NetworkAddress(f"172.60.145.{ip}", None) in scan_targets
+        assert NetworkAddress(f"172.60.145.{ip}", "") in scan_targets
 
 
 def test_segmentation_targets():
@@ -334,7 +334,7 @@ def test_segmentation_targets():
     assert len(scan_targets) == 3
 
     for ip in [144, 145, 146]:
-        assert NetworkAddress(f"172.60.145.{ip}", None) in scan_targets
+        assert NetworkAddress(f"172.60.145.{ip}", "") in scan_targets
 
 
 def test_segmentation_clash_with_blocked():
@@ -377,7 +377,7 @@ def test_segmentation_clash_with_targets():
     assert len(scan_targets) == 3
 
     for ip in [148, 149, 150]:
-        assert NetworkAddress(f"172.60.145.{ip}", None) in scan_targets
+        assert NetworkAddress(f"172.60.145.{ip}", "") in scan_targets
 
 
 def test_segmentation_one_network():
@@ -443,7 +443,7 @@ def test_invalid_inputs():
     assert len(scan_targets) == 3
 
     for ip in [148, 149, 150]:
-        assert NetworkAddress(f"172.60.145.{ip}", None) in scan_targets
+        assert NetworkAddress(f"172.60.145.{ip}", "") in scan_targets
 
 
 def test_invalid_blocklisted_ip():

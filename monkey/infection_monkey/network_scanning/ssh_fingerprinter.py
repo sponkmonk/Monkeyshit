@@ -21,7 +21,7 @@ class SSHFingerprinter(IFingerprinter):
         _options: Dict,
     ) -> FingerprintData:
         os_type = None
-        os_version = None
+        os_version = ""
         services = {}
 
         for ps_data in port_scan_data.values():
@@ -35,9 +35,9 @@ class SSHFingerprinter(IFingerprinter):
         return FingerprintData(os_type, os_version, services)
 
     @staticmethod
-    def _get_host_os(banner) -> Tuple[Optional[str], Optional[str]]:
+    def _get_host_os(banner) -> Tuple[Optional[OperatingSystem], str]:
         os = None
-        os_version = None
+        os_version = ""
         for dist in LINUX_DIST_SSH:
             if banner.lower().find(dist) != -1:
                 os_version = banner.split(" ").pop().strip()

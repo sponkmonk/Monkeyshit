@@ -38,7 +38,7 @@ def test_successful(monkeypatch, fingerprinter):
     )
 
     assert fingerprint_data.os_type is None
-    assert fingerprint_data.os_version is None
+    assert not fingerprint_data.os_version
     assert len(fingerprint_data.services.keys()) == 1
 
     es_service = fingerprint_data.services[ES_SERVICE]
@@ -60,7 +60,7 @@ def test_fingerprinting_skipped_if_port_closed(monkeypatch, fingerprinter, port_
 
     assert not mock_query_elasticsearch.called
     assert fingerprint_data.os_type is None
-    assert fingerprint_data.os_version is None
+    assert not fingerprint_data.os_version
     assert len(fingerprint_data.services.keys()) == 0
 
 
@@ -82,5 +82,5 @@ def test_no_response_from_server(monkeypatch, fingerprinter, mock_query_function
     )
 
     assert fingerprint_data.os_type is None
-    assert fingerprint_data.os_version is None
+    assert not fingerprint_data.os_version
     assert len(fingerprint_data.services.keys()) == 0

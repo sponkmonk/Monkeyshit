@@ -1,7 +1,7 @@
 import errno
 import logging
 import socket
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from infection_monkey.i_puppet import FingerprintData, IFingerprinter, PingScanData, PortScanData
 
@@ -32,10 +32,10 @@ class MSSQLFingerprinter(IFingerprinter):
         except Exception as ex:
             logger.debug(f"Did not detect an MSSQL server: {ex}")
 
-        return FingerprintData(None, None, services)
+        return FingerprintData(None, "", services)
 
 
-def _query_mssql_for_instance_data(host: str) -> Optional[bytes]:
+def _query_mssql_for_instance_data(host: str) -> bytes:
     # Create a UDP socket and sets a timeout
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.settimeout(_MSSQL_SOCKET_TIMEOUT)
@@ -44,22 +44,20 @@ def _query_mssql_for_instance_data(host: str) -> Optional[bytes]:
 
     # The message is a CLNT_UCAST_EX packet to get all instances
     # https://msdn.microsoft.com/en-us/library/cc219745.aspx
-    message = "\x03"
+    message_str = "\x03"
 
     # Encode the message as a bytes array
-    message = message.encode()
+    message = message_str.encode()
 
     # send data and receive response
     try:
-        logger.info(f"Sending message to requested host: {host}, {message}")
+        logger.info(f"Sending message to requested host: {host}, {message_str}")
         sock.sendto(message, server_address)
         data, _ = sock.recvfrom(_BUFFER_SIZE)
 
         return data
     except socket.timeout as err:
-        logger.debug(
-            f"Socket timeout reached, maybe browser service on host: {host} doesnt " "exist"
-        )
+        logger.debug(f"Socket timeout reached, maybe browser service on host: {host} doesn't exist")
         raise err
     except socket.error as err:
         if err.errno == errno.ECONNRESET:
@@ -78,7 +76,7 @@ def _query_mssql_for_instance_data(host: str) -> Optional[bytes]:
 
 
 def _get_services_from_server_data(data: bytes) -> Dict[str, Any]:
-    services = {MSSQL_SERVICE: {}}
+    services: Dict[str, Any] = {MSSQL_SERVICE: {}}
     services[MSSQL_SERVICE]["display_name"] = DISPLAY_NAME
     services[MSSQL_SERVICE]["port"] = SQL_BROWSER_DEFAULT_PORT
 

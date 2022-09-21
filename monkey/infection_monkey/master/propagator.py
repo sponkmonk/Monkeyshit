@@ -2,7 +2,7 @@ import logging
 from ipaddress import IPv4Interface
 from queue import Queue
 from threading import Event
-from typing import List, Sequence
+from typing import Dict, List, Sequence
 
 from common.agent_configuration import (
     ExploitationConfiguration,
@@ -154,11 +154,12 @@ class Propagator:
             victim_host.services[psd.service] = {}
             victim_host.services[psd.service]["display_name"] = "unknown(TCP)"
             victim_host.services[psd.service]["port"] = psd.port
-            if psd.banner is not None:
-                victim_host.services[psd.service]["banner"] = psd.banner
+            victim_host.services[psd.service]["banner"] = psd.banner
 
     @staticmethod
-    def _process_fingerprinter_results(victim_host: VictimHost, fingerprint_data: FingerprintData):
+    def _process_fingerprinter_results(
+        victim_host: VictimHost, fingerprint_data: Dict[str, FingerprintData]
+    ):
         for fd in fingerprint_data.values():
             # TODO: This logic preserves the existing behavior prior to introducing IMaster and
             #       IPuppet, but it is possibly flawed. Different fingerprinters may detect
@@ -167,7 +168,7 @@ class Propagator:
             if fd.os_type is not None:
                 victim_host.os["type"] = fd.os_type
 
-            if ("version" not in victim_host.os) and (fd.os_version is not None):
+            if ("version" not in victim_host.os) and (fd.os_version):
                 victim_host.os["version"] = fd.os_version
 
             for service, details in fd.services.items():

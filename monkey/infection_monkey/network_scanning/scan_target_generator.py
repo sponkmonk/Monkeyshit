@@ -26,10 +26,10 @@ def compile_scan_target_list(
         scan_targets.extend(_get_ips_to_scan_from_local_interface(local_network_interfaces))
 
     if inaccessible_subnets:
-        inaccessible_subnets = _get_segmentation_check_targets(
+        inaccessible_subnet_addresses = _get_segmentation_check_targets(
             inaccessible_subnets, local_network_interfaces
         )
-        scan_targets.extend(inaccessible_subnets)
+        scan_targets.extend(inaccessible_subnet_addresses)
 
     scan_targets = _remove_interface_ips(scan_targets, local_network_interfaces)
     scan_targets = _remove_blocklisted_ips(scan_targets, blocklisted_ips)
@@ -44,7 +44,7 @@ def _remove_redundant_targets(targets: List[NetworkAddress]) -> List[NetworkAddr
     for target in targets:
         domain_name = target.domain
         ip = target.ip
-        if ip not in reverse_dns or (reverse_dns[ip] is None and domain_name is not None):
+        if ip not in reverse_dns or (not reverse_dns[ip] and domain_name):
             reverse_dns[ip] = domain_name
     return [NetworkAddress(key, value) for (key, value) in reverse_dns.items()]
 
@@ -55,7 +55,7 @@ def _range_to_addresses(range_obj: NetworkRange) -> List[NetworkAddress]:
         if hasattr(range_obj, "domain_name"):
             addresses.append(NetworkAddress(address, range_obj.domain_name))
         else:
-            addresses.append(NetworkAddress(address, None))
+            addresses.append(NetworkAddress(address, ""))
     return addresses
 
 

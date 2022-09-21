@@ -45,7 +45,7 @@ def test_mssql_fingerprint_successful(monkeypatch, fingerprinter):
     )
 
     assert fingerprint_data.os_type is None
-    assert fingerprint_data.os_version is None
+    assert not fingerprint_data.os_version
     assert len(fingerprint_data.services.keys()) == 1
 
     # Each mssql instance is under his name
@@ -78,7 +78,7 @@ def test_mssql_no_response_from_server(monkeypatch, fingerprinter, mock_query_fu
     )
 
     assert fingerprint_data.os_type is None
-    assert fingerprint_data.os_version is None
+    assert not fingerprint_data.os_version
     assert len(fingerprint_data.services.keys()) == 0
 
 
@@ -98,5 +98,5 @@ def test_mssql_wrong_response_from_server(monkeypatch, fingerprinter):
     )
 
     assert fingerprint_data.os_type is None
-    assert fingerprint_data.os_version is None
+    assert not fingerprint_data.os_version
     assert len(fingerprint_data.services.keys()) == 0

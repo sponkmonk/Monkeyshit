@@ -154,7 +154,7 @@ def assert_fingerprint_results_no_3(fingerprint_data):
 
 def assert_scan_results_host_down(address, ping_scan_data, port_scan_data, fingerprint_data):
     assert address.ip not in {"10.0.0.1", "10.0.0.3"}
-    assert address.domain is None
+    assert not address.domain
 
     assert ping_scan_data.response_received is False
     assert len(port_scan_data.keys()) == 6
@@ -178,9 +178,9 @@ def test_scan_single_ip(callback, scan_config, stop):
 def test_scan_multiple_ips(callback, scan_config, stop):
     addresses = [
         NetworkAddress("10.0.0.1", "d1"),
-        NetworkAddress("10.0.0.2", None),
+        NetworkAddress("10.0.0.2", ""),
         NetworkAddress("10.0.0.3", "d3"),
-        NetworkAddress("10.0.0.4", None),
+        NetworkAddress("10.0.0.4", ""),
     ]
 
     ns = IPScanner(MockPuppet(), num_workers=4)
@@ -203,7 +203,7 @@ def test_scan_multiple_ips(callback, scan_config, stop):
 
 @pytest.mark.slow
 def test_scan_lots_of_ips(callback, scan_config, stop):
-    addresses = [NetworkAddress(f"10.0.0.{i}", None) for i in range(0, 255)]
+    addresses = [NetworkAddress(f"10.0.0.{i}", "") for i in range(0, 255)]
 
     ns = IPScanner(MockPuppet(), num_workers=4)
     ns.scan(addresses, scan_config, callback, stop)
@@ -223,10 +223,10 @@ def test_stop_after_callback(scan_config, stop):
     stoppable_callback = MagicMock(side_effect=_callback)
 
     addresses = [
-        NetworkAddress("10.0.0.1", None),
-        NetworkAddress("10.0.0.2", None),
-        NetworkAddress("10.0.0.3", None),
-        NetworkAddress("10.0.0.4", None),
+        NetworkAddress("10.0.0.1", ""),
+        NetworkAddress("10.0.0.2", ""),
+        NetworkAddress("10.0.0.3", ""),
+        NetworkAddress("10.0.0.4", ""),
     ]
 
     ns = IPScanner(MockPuppet(), num_workers=2)
@@ -251,10 +251,10 @@ def test_interrupt_before_fingerprinting(callback, scan_config, stop):
     puppet.fingerprint = MagicMock()
 
     addresses = [
-        NetworkAddress("10.0.0.1", None),
-        NetworkAddress("10.0.0.2", None),
-        NetworkAddress("10.0.0.3", None),
-        NetworkAddress("10.0.0.4", None),
+        NetworkAddress("10.0.0.1", ""),
+        NetworkAddress("10.0.0.2", ""),
+        NetworkAddress("10.0.0.3", ""),
+        NetworkAddress("10.0.0.4", ""),
     ]
 
     ns = IPScanner(puppet, num_workers=2)
@@ -270,7 +270,7 @@ def test_interrupt_fingerprinting(callback, scan_config, stop):
         stoppable_fingerprint.barrier.wait()
         stop.set()
 
-        return FingerprintData(None, None, {})
+        return FingerprintData(None, "", {})
 
     stoppable_fingerprint.barrier = Barrier(2)
 
@@ -278,10 +278,10 @@ def test_interrupt_fingerprinting(callback, scan_config, stop):
     puppet.fingerprint = MagicMock(side_effect=stoppable_fingerprint)
 
     addresses = [
-        NetworkAddress("10.0.0.1", None),
-        NetworkAddress("10.0.0.2", None),
-        NetworkAddress("10.0.0.3", None),
-        NetworkAddress("10.0.0.4", None),
+        NetworkAddress("10.0.0.1", ""),
+        NetworkAddress("10.0.0.2", ""),
+        NetworkAddress("10.0.0.3", ""),
+        NetworkAddress("10.0.0.4", ""),
     ]
 
     ns = IPScanner(puppet, num_workers=2)

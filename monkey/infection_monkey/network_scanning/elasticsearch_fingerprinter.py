@@ -31,10 +31,10 @@ class ElasticSearchFingerprinter(IFingerprinter):
         port_scan_data: Dict[int, PortScanData],
         _options: Dict,
     ) -> FingerprintData:
-        services = {}
+        services: Dict[str, Any] = {}
 
         if (ES_PORT not in port_scan_data) or (port_scan_data[ES_PORT].status != PortStatus.OPEN):
-            return FingerprintData(None, None, services)
+            return FingerprintData(None, "", services)
 
         try:
             elasticsearch_info = _query_elasticsearch(host)
@@ -42,7 +42,7 @@ class ElasticSearchFingerprinter(IFingerprinter):
         except Exception as ex:
             logger.debug(f"Did not detect an ElasticSearch cluster: {ex}")
 
-        return FingerprintData(None, None, services)
+        return FingerprintData(None, "", services)
 
 
 def _query_elasticsearch(host: str) -> Dict[str, Any]:

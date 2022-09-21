@@ -1,6 +1,6 @@
 import logging
 from contextlib import closing
-from typing import Any, Dict, Iterable, Optional, Set, Tuple
+from typing import Any, Dict, Iterable, Mapping, Optional, Set, Tuple
 
 from requests import head
 from requests.exceptions import ConnectionError, Timeout
@@ -46,7 +46,7 @@ class HTTPFingerprinter(IFingerprinter):
                     "data": (server_header_contents, ssl),
                 }
 
-        return FingerprintData(None, None, services)
+        return FingerprintData(None, "", services)
 
 
 def _query_potential_http_server(host: str, port: int) -> Tuple[Optional[str], Optional[bool]]:
@@ -71,7 +71,7 @@ def _get_server_from_headers(url: str) -> Optional[str]:
     return None
 
 
-def _get_http_headers(url: str) -> Optional[Dict[str, Any]]:
+def _get_http_headers(url: str) -> Optional[Mapping[str, Any]]:
     try:
         logger.debug(f"Sending request for headers to {url}")
         with closing(head(url, verify=False, timeout=1)) as response:  # noqa: DUO123

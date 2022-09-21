@@ -18,7 +18,7 @@ def test_no_ssh_ports_open(ssh_fingerprinter):
     }
     results = ssh_fingerprinter.get_host_fingerprint("127.0.0.1", None, port_scan_data, None)
 
-    assert results == FingerprintData(None, None, {})
+    assert results == FingerprintData(None, "", {})
 
 
 def test_no_os(ssh_fingerprinter):
@@ -32,7 +32,7 @@ def test_no_os(ssh_fingerprinter):
 
     assert results == FingerprintData(
         None,
-        None,
+        "",
         {
             "tcp-22": {
                 "display_name": "SSH",

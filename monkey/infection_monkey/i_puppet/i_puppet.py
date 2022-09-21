@@ -1,10 +1,10 @@
 import abc
 import threading
-from collections import namedtuple
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, Iterable, List, Mapping, Sequence
+from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
+from common import OperatingSystem
 from common.credentials import Credentials
 from infection_monkey.model import VictimHost
 
@@ -26,15 +26,37 @@ class ExploiterResultData:
     propagation_success: bool = False
     interrupted: bool = False
     os: str = ""
-    info: Mapping = None
-    attempts: Iterable = None
+    info: Mapping = field(default_factory=lambda: {})
+    attempts: Iterable = field(default_factory=lambda: [])
     error_message: str = ""
 
 
-PingScanData = namedtuple("PingScanData", ["response_received", "os"])
-PortScanData = namedtuple("PortScanData", ["port", "status", "banner", "service"])
-FingerprintData = namedtuple("FingerprintData", ["os_type", "os_version", "services"])
-PostBreachData = namedtuple("PostBreachData", ["display_name", "command", "result"])
+@dataclass(frozen=True)
+class FingerprintData:
+    os_type: Optional[OperatingSystem]
+    os_version: str
+    services: Mapping = field(default_factory=lambda: {})
+
+
+@dataclass(frozen=True)
+class PingScanData:
+    response_received: bool
+    os: Optional[OperatingSystem]
+
+
+@dataclass(frozen=True)
+class PortScanData:
+    port: int
+    status: PortStatus
+    banner: str
+    service: str
+
+
+@dataclass(frozen=True)
+class PostBreachData:
+    display_name: str
+    command: str
+    result: Tuple[str, bool]
 
 
 class IPuppet(metaclass=abc.ABCMeta):
@@ -84,7 +106,7 @@ class IPuppet(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def scan_tcp_ports(
         self, host: str, ports: List[int], timeout: float = 3
-    ) -> Dict[int, PortScanData]:
+    ) -> Mapping[int, PortScanData]:
         """
         Scans a list of TCP ports on a remote host
 
@@ -92,7 +114,7 @@ class IPuppet(metaclass=abc.ABCMeta):
         :param int ports: List of TCP port numbers to scan
         :param float timeout: The maximum amount of time (in seconds) to wait for a response
         :return: The data collected by scanning the provided host:ports combination
-        :rtype: Dict[int, PortScanData]
+        :rtype: Mapping[int, PortScanData]
         """
 
     @abc.abstractmethod
@@ -125,6 +147,7 @@ class IPuppet(metaclass=abc.ABCMeta):
         name: str,
         host: VictimHost,
         current_depth: int,
+        servers: Sequence[str],
         options: Dict,
         interrupt: threading.Event,
     ) -> ExploiterResultData:

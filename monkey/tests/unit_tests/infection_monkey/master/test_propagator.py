@@ -35,12 +35,12 @@ def mock_victim_host_factory():
     return MockVictimHostFactory()
 
 
-empty_fingerprint_data = FingerprintData(None, None, {})
+empty_fingerprint_data = FingerprintData(None, "", {})
 
 dot_1_scan_results = IPScanResults(
     PingScanData(True, "windows"),
     {
-        22: PortScanData(22, PortStatus.CLOSED, None, None),
+        22: PortScanData(22, PortStatus.CLOSED, "", ""),
         445: PortScanData(445, PortStatus.OPEN, "SMB BANNER", "tcp-445"),
         3389: PortScanData(3389, PortStatus.OPEN, "", "tcp-3389"),
     },
@@ -56,7 +56,7 @@ dot_3_scan_results = IPScanResults(
     {
         22: PortScanData(22, PortStatus.OPEN, "SSH BANNER", "tcp-22"),
         443: PortScanData(443, PortStatus.OPEN, "HTTPS BANNER", "tcp-443"),
-        3389: PortScanData(3389, PortStatus.CLOSED, "", None),
+        3389: PortScanData(3389, PortStatus.CLOSED, "", ""),
     },
     {
         "SSHFinger": FingerprintData(
@@ -64,7 +64,7 @@ dot_3_scan_results = IPScanResults(
         ),
         "HTTPFinger": FingerprintData(
             None,
-            None,
+            "",
             {
                 "tcp-80": {"name": "http", "data": ("SERVER_HEADERS", False)},
                 "tcp-443": {"name": "http", "data": ("SERVER_HEADERS_2", True)},
@@ -77,9 +77,9 @@ dot_3_scan_results = IPScanResults(
 dead_host_scan_results = IPScanResults(
     PingScanData(False, None),
     {
-        22: PortScanData(22, PortStatus.CLOSED, None, None),
-        443: PortScanData(443, PortStatus.CLOSED, None, None),
-        3389: PortScanData(3389, PortStatus.CLOSED, "", None),
+        22: PortScanData(22, PortStatus.CLOSED, "", ""),
+        443: PortScanData(443, PortStatus.CLOSED, "", ""),
+        3389: PortScanData(3389, PortStatus.CLOSED, "", ""),
     },
     {},
 )

@@ -34,7 +34,7 @@ def test_tcp_successful(monkeypatch, patch_check_tcp_ports, open_ports_data):
     for port in closed_ports:
         assert port_scan_data[port].port == port
         assert port_scan_data[port].status == PortStatus.CLOSED
-        assert port_scan_data[port].banner is None
+        assert not port_scan_data[port].banner
 
 
 @pytest.mark.parametrize("open_ports_data", [{}])

@@ -77,14 +77,14 @@ class MockPuppet(IPuppet):
     ) -> Dict[int, PortScanData]:
         logger.debug(f"run_scan_tcp_port({host}, {ports}, {timeout})")
         dot_1_results = {
-            22: PortScanData(22, PortStatus.CLOSED, None, None),
+            22: PortScanData(22, PortStatus.CLOSED, "", ""),
             445: PortScanData(445, PortStatus.OPEN, "SMB BANNER", "tcp-445"),
             3389: PortScanData(3389, PortStatus.OPEN, "", "tcp-3389"),
         }
         dot_3_results = {
             22: PortScanData(22, PortStatus.OPEN, "SSH BANNER", "tcp-22"),
             443: PortScanData(443, PortStatus.OPEN, "HTTPS BANNER", "tcp-443"),
-            3389: PortScanData(3389, PortStatus.CLOSED, "", None),
+            3389: PortScanData(3389, PortStatus.CLOSED, "", ""),
         }
 
         if host == DOT_1:
@@ -104,7 +104,7 @@ class MockPuppet(IPuppet):
         options: Dict,
     ) -> FingerprintData:
         logger.debug(f"fingerprint({name}, {host})")
-        empty_fingerprint_data = FingerprintData(None, None, {})
+        empty_fingerprint_data = FingerprintData(None, "", {})
 
         dot_1_results = {
             "SMBFinger": FingerprintData(
@@ -118,7 +118,7 @@ class MockPuppet(IPuppet):
             ),
             "HTTPFinger": FingerprintData(
                 None,
-                None,
+                "",
                 {
                     "tcp-80": {"name": "http", "data": ("SERVER_HEADERS", False)},
                     "tcp-443": {"name": "http", "data": ("SERVER_HEADERS_2", True)},
@@ -248,4 +248,4 @@ class MockPuppet(IPuppet):
 
 
 def _get_empty_results(port: int):
-    return PortScanData(port, PortStatus.CLOSED, None, None)
+    return PortScanData(port, PortStatus.CLOSED, "", "")

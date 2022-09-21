@@ -7,7 +7,6 @@ class StdoutCapture:
         self._orig_stdout = sys.stdout
         self._new_stdout = io.StringIO()
         sys.stdout = self._new_stdout
-        return self
 
     def get_captured_stdout_output(self) -> str:
         self._new_stdout.seek(0)

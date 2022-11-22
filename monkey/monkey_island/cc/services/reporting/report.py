@@ -186,12 +186,6 @@ class ReportService:
     def simple_hostname(machine: Machine):
         return machine.hostname if machine.hostname else str(machine.network_interfaces[0].ip)
 
-    @staticmethod
-    def detailed_hostname(machine: Machine):
-        if machine.hostname:
-            return f"{machine.hostname}@{machine.network_interfaces[0].ip}"
-        return str(machine.network_interfaces[0].ip)
-
     @classmethod
     def exploits_by_machine(
         cls, events: Iterable[ExploitationEvent]
@@ -224,14 +218,17 @@ class ReportService:
         machine_exploits = cls.exploits_by_machine(filtered_exploits)
 
         issues = []
-        hostnames: Set[str] = set()
+        hostnames: Dict[str, int] = {}
         for m, event_list in machine_exploits.items():
-            hostname = cls.simple_hostname(m)
-            if hostname in hostnames:
-                hostname = cls.detailed_hostname(m)
-            hostnames.add(hostname)
+            name = cls.simple_hostname(m)
+            if name in hostnames:
+                count = hostnames[name] + 1
+                name = f"{name}-{count}"
+                hostnames[name] = count
+            else:
+                hostnames[name] = 1
             for event in event_list:
-                issues.append(asdict(cls.process_exploit_event(event, password_restored, hostname)))
+                issues.append(asdict(cls.process_exploit_event(event, password_restored, name)))
 
         return issues
 

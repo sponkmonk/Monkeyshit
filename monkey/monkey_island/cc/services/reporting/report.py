@@ -187,16 +187,17 @@ class ReportService:
         return machine.hostname if machine.hostname else str(machine.network_interfaces[0].ip)
 
     @classmethod
-    def exploits_by_machine(
+    def exploits_by_hostname(
         cls, events: Iterable[ExploitationEvent]
-    ) -> DefaultDict[Machine, List[ExploitationEvent]]:
+    ) -> DefaultDict[str, List[ExploitationEvent]]:
         if not cls._machine_repository:
             raise RuntimeError("Machine repository does not exist")
 
-        machine_events: DefaultDict[Machine, List[ExploitationEvent]] = defaultdict(list)
+        machine_events: DefaultDict[str, List[ExploitationEvent]] = defaultdict(list)
         for e in events:
             target_machine = cls._machine_repository.get_machines_by_ip(e.target)[0]
-            machine_events[target_machine].append(e)
+            hostname = cls.simple_hostname(target_machine)
+            machine_events[hostname].append(e)
 
         return machine_events
 
@@ -215,20 +216,15 @@ class ReportService:
             lambda: None, {e.target: e.success for e in zerologon_events}
         )
 
-        machine_exploits = cls.exploits_by_machine(filtered_exploits)
+        machine_exploits = cls.exploits_by_hostname(filtered_exploits)
 
         issues = []
-        hostnames: Dict[str, int] = {}
-        for m, event_list in machine_exploits.items():
-            name = cls.simple_hostname(m)
-            if name in hostnames:
-                count = hostnames[name] + 1
-                name = f"{name}-{count}"
-                hostnames[name] = count
-            else:
-                hostnames[name] = 1
+        for name, event_list in machine_exploits.items():
+            hostname = name
             for event in event_list:
-                issues.append(asdict(cls.process_exploit_event(event, password_restored, name)))
+                if len(event_list) > 1:
+                    hostname = f"{name}@{event.target}"
+                issues.append(asdict(cls.process_exploit_event(event, password_restored, hostname)))
 
         return issues
 

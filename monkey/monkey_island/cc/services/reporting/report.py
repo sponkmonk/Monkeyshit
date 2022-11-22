@@ -160,16 +160,8 @@ class ReportService:
         cls,
         exploitation_event: ExploitationEvent,
         password_restored: DefaultDict[IPv4Address, bool],
+        hostname: str,
     ) -> ExploiterReportInfo:
-        if not cls._machine_repository:
-            raise RuntimeError("Machine repository does not exist")
-
-        target_machine = cls._machine_repository.get_machines_by_ip(exploitation_event.target)[0]
-        hostname = (
-            target_machine.hostname
-            if target_machine.hostname
-            else str(target_machine.network_interfaces[0].ip)
-        )
         return ExploiterReportInfo(
             hostname,
             str(exploitation_event.target),
@@ -190,6 +182,30 @@ class ReportService:
                 ips.add(exploit.target)
                 yield exploit
 
+    @staticmethod
+    def simple_hostname(machine: Machine):
+        return machine.hostname if machine.hostname else str(machine.network_interfaces[0].ip)
+
+    @staticmethod
+    def detailed_hostname(machine: Machine):
+        if machine.hostname:
+            return f"{machine.hostname}@{machine.network_interfaces[0].ip}"
+        return str(machine.network_interfaces[0].ip)
+
+    @classmethod
+    def exploits_by_machine(
+        cls, events: Iterable[ExploitationEvent]
+    ) -> DefaultDict[Machine, List[ExploitationEvent]]:
+        if not cls._machine_repository:
+            raise RuntimeError("Machine repository does not exist")
+
+        machine_events: DefaultDict[Machine, List[ExploitationEvent]] = defaultdict(list)
+        for e in events:
+            target_machine = cls._machine_repository.get_machines_by_ip(e.target)[0]
+            machine_events[target_machine].append(e)
+
+        return machine_events
+
     @classmethod
     def get_exploits(cls) -> List[dict]:
         if not cls._agent_event_repository:
@@ -205,8 +221,19 @@ class ReportService:
             lambda: None, {e.target: e.success for e in zerologon_events}
         )
 
-        # Convert the ExploitationEvent into an ExploiterReportInfo
-        return [asdict(cls.process_exploit_event(e, password_restored)) for e in filtered_exploits]
+        machine_exploits = cls.exploits_by_machine(filtered_exploits)
+
+        issues = []
+        hostnames: Set[str] = set()
+        for m, event_list in machine_exploits.items():
+            hostname = cls.simple_hostname(m)
+            if hostname in hostnames:
+                hostname = cls.detailed_hostname(m)
+            hostnames.add(hostname)
+            for event in event_list:
+                issues.append(asdict(cls.process_exploit_event(event, password_restored, hostname)))
+
+        return issues
 
     @classmethod
     def get_island_cross_segment_issues(cls):

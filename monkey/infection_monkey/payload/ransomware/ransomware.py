@@ -10,6 +10,7 @@ from infection_monkey.utils.ids import get_agent_id
 from infection_monkey.utils.threading import interruptible_function, interruptible_iter
 
 from .consts import README_FILE_NAME, README_SRC
+from .file_selectors import FileSearchException
 from .ransomware_options import RansomwareOptions
 
 logger = logging.getLogger(__name__)
@@ -47,23 +48,12 @@ class Ransomware:
 
         logger.info("Running ransomware payload")
 
-        if not self._target_directory.exists():
-            logger.warning(f"Target directory {self._target_directory} does not exist")
-            return
-
-        if not self._target_directory.is_dir():
-            logger.warning(f"Target directory {self._target_directory} is not a directory")
-            return
-
-        if self._target_directory.is_symlink():
-            logger.warning(
-                "The ransomware payload will not follow symlinks - skipping "
-                f"{self._target_directory}"
-            )
-            return
-
         if self._config.encryption_enabled:
-            files_to_encrypt = self._find_files()
+            try:
+                files_to_encrypt = self._find_files()
+            except FileSearchException as err:
+                logger.warning(f"Couldn't find files to encrypt: {err}")
+                return
             self._encrypt_files(files_to_encrypt, interrupt)
 
         if self._config.readme_enabled:

@@ -11,7 +11,9 @@ RUN apt-get update && apt-get install -y gcc \
     && pip install -U pip \
     && cd monkey_island \
     && pip install pipenv \
-    && pipenv sync
+    && pipenv sync \
+    && pip uninstall -y pipenv pyinstaller setuptools \
+    && pip uninstall -y pip
 
 
 # Build the final application using a second image, which
@@ -24,6 +26,8 @@ ENV MONKEY_DOCKER_CONTAINER=true
 RUN apt-get update \
     && apt-get install -y iputils-ping \
     && apt-get clean \
+    && pip uninstall -y setuptools ensurepip \
+    && pip uninstall -y pip \
     && groupadd -r monkey-island \
     && useradd --no-log-init -r -g monkey-island monkey-island \
     && chmod 444 /monkey/monkey_island/cc/server.key \
